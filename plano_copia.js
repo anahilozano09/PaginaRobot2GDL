@@ -8,42 +8,52 @@ const X_max = 35;
 const Y_min = -35;
 const Y_max = 35;
 
+// 3. Mapeo de Coordenadas: de Plano a Píxel
 /**
- * @param {number} x
- * @returns {number}
+ * Convierte una coordenada X del plano (ej. -5) a una coordenada de píxel (ej. 125).
+ * @param {number} x La coordenada X en el plano cartesiano.
+ * @returns {number} La coordenada X en píxeles.
  */
 function mapX(x) {
+    // Escala: (x - X_min) / (X_max - X_min) da un valor entre 0 y 1
+    // Multiplicado por W lo escala al ancho del canvas
     return W * (x - X_min) / (X_max - X_min);
 }
 
 /**
- * @param {number} y
- * @returns {number}
+ * Convierte una coordenada Y del plano (ej. 5) a una coordenada de píxel (ej. 125).
+ * @param {number} y La coordenada Y en el plano cartesiano.
+ * @returns {number} La coordenada Y en píxeles.
  */
 function mapY(y) {
-
+    // Nota: Las coordenadas Y del canvas crecen hacia abajo. 
+    // Por eso usamos (Y_max - y) en lugar de (y - Y_min) para invertir el eje.
     return H * (Y_max - y) / (Y_max - Y_min);
 }
 
+// 4. Funciones de Dibujo (Usando la Escala)
+
 /**
- * @param {number} x
- * @param {number} y
+ * Dibuja un punto en coordenadas cartesianas (x, y).
+ * @param {number} x Coordenada X del plano.
+ * @param {number} y Coordenada Y del plano.
  */
 function dibujarPunto(x, y, color) {
-    const px = mapX(x);
-    const py = mapY(y); 
+    const px = mapX(x); // Transforma X
+    const py = mapY(y); // Transforma Y
 
     ctx.beginPath();
-    ctx.arc(px, py, 4, 0, 2 * Math.PI);
+    ctx.arc(px, py, 4, 0, 2 * Math.PI); // Radio ligeramente más grande para visibilidad
     ctx.fillStyle = color;
     ctx.fill();
 }
   
 /**
- * @param {number} x1 
- * @param {number} y1
- * @param {number} x2
- * @param {number} y2
+ * Dibuja una línea entre dos puntos en coordenadas cartesianas (x, y).
+ * @param {number} x1 Coordenada X del punto 1.
+ * @param {number} y1 Coordenada Y del punto 1.
+ * @param {number} x2 Coordenada X del punto 2.
+ * @param {number} y2 Coordenada Y del punto 2.
  */
 function dibujarLinea(x1, y1, x2, y2, color, ancho) {
     const px1 = mapX(x1);
@@ -61,7 +71,7 @@ function dibujarLinea(x1, y1, x2, y2, color, ancho) {
 
 
 function dibujarEjes() {
-    ctx.strokeStyle = '#000';
+    ctx.strokeStyle = '#000'; // Negro
     ctx.lineWidth = 1;
 
     ctx.beginPath();
@@ -81,6 +91,7 @@ function dibujarEjes() {
     ctx.fillText('X [cm]', mapX(X_max) - 40, mapY(0) - 15)
     ctx.fillText('Y [cm]', mapX(0) + 18, mapY(Y_max) + 22)
 
+    // Etiquetas de la grafica
     dibujarLinea(30,34,35,34,"Purple",7)
     etiqueta(24,33.2, "l1 inicial")
     dibujarLinea(30,32,35,32,"OrangeRed",7)
@@ -97,6 +108,7 @@ function drawTicks() {
     ctx.font = '10px Arial';
     const tickLength = 4;
     
+    // Marcas en el eje X
     for (let x = Math.ceil(X_min); x <= Math.floor(X_max); x++) {
         if (x !== 0 && x % 5 === 0 && (x > -35 && x < 35 )) { 
             const px = mapX(x);
@@ -111,6 +123,7 @@ function drawTicks() {
         }
     }
 
+    // Marcas en el eje Y
     for (let y = Math.ceil(Y_min); y <= Math.floor(Y_max); y++) {
         if (y !== 0 && y % 5 === 0 && (y > -35 && y < 35 )) { 
             const px_origin = mapX(0);
@@ -137,6 +150,8 @@ function etiqueta(x, y , texto, color='black'){
 
 }
 
+// Coordenadas iniciales
+// Se define la funcion que maneja el estado inicial de los eslabones
 
 function estadoInicial(){
     l1 = 12
@@ -155,30 +170,33 @@ function estadoInicial(){
     sin_beta = Math.sqrt(1-Math.pow(D,2))
     beta_rad = Math.atan2(sin_beta, D)
 
+    //theta_1 = 90 grados, esto es igual a pi medios
     theta_1a_rad = Math.PI / 2
 
     X_l1 = l1*Math.cos(theta_1a_rad)
     Y_l1 = l1*Math.sin(theta_1a_rad)
 
+    //Obteniendo las distancias que hay entre X_l1 y Y_l1 respecto a Xi y Yi
     dif_x = Xi - X_l1
     dif_y = Yi - Y_l1
 
     theta_2a_rad = Math.atan2(dif_y,dif_x) - theta_1a_rad
+
 
     X_l2 = X_l1 + l2*Math.cos(theta_1a_rad+theta_2a_rad)
     Y_l2 = Y_l1 + l2*Math.sin(theta_1a_rad+theta_2a_rad)
 
     dibujarLinea(0,0,X_l1,Y_l1,"Purple",4)
     dibujarLinea(X_l1,Y_l1, X_l2, Y_l2, "OrangeRed",4)
+
+    //Dibujamos la pinza
    
     anguloTotal = theta_1a_rad + theta_2a_rad
     dibujarPinza(X_l2, Y_l2, anguloTotal, 2)
 
+
     dibujarPunto(Xi,Yi, "Red")
     etiqueta(Xi, Yi, `(${Xi},${Yi})`, "Red")
-
-    datos = obtenerTrayectoria(Xi, Yi, Xd, Yd, l1, l2, c)
-    graficarAngulos(datos)
 
 }
 
@@ -215,6 +233,7 @@ function trayectoria(x1, y1, x2, y2, color, ancho){
     dist_Y = y2 - y1
 
     dist_Total = Math.sqrt(Math.pow(dist_X,2)+Math.pow(dist_Y,2))
+    pasos = dist_Total / (longitud_segmento + distancia_segmento)
 
     direccion_X = dist_X / dist_Total
     direccion_Y = dist_Y / dist_Total
@@ -253,6 +272,7 @@ function coordDest (event){
     if (!isNaN(Xd) && !isNaN(Yd)){
         dibujarPunto(Xd,Yd,"red");
 
+        //Calculando el eslabon l1
         l1 = 12
         l2 = 12
         c = 2
@@ -269,23 +289,34 @@ function coordDest (event){
             return;
         }
 
+        //Checar esto
         D = (Math.pow(l1, 2) + Math.pow(l2_c, 2) - Math.pow(dist, 2)) / (2 * l1 * l2_c);
 
         sin_beta = Math.sqrt(1-Math.pow(D,2))
         beta_rad = Math.atan2(sin_beta, D)
 
+        //Checar las ecuaciones
+        //Es 1-D²
+        //Codo abajo
         theta_2a_rad = Math.PI-beta_rad
+
 
         gamma_a_rad = Math.atan2(l2_c * Math.sin(theta_2a_rad), l1 + l2_c * Math.cos(theta_2a_rad))
 
         theta_1a_rad = alpha_rad - gamma_a_rad
 
+
+        //Para el eslabon 1
+
         X_l1 = l1*Math.cos(theta_1a_rad)
         Y_l1 = l1*Math.sin(theta_1a_rad)
 
+
+        //Para el eslabon 2
         X_l2 = l1*Math.cos(theta_1a_rad) + l2*Math.cos(theta_1a_rad+theta_2a_rad)
         Y_l2 = l1*Math.sin(theta_1a_rad) + l2*Math.sin(theta_1a_rad+theta_2a_rad)
 
+        //Calculamos el angulo total para dibujar la pinza
         anguloTotal = theta_1a_rad + theta_2a_rad
 
         
@@ -299,6 +330,8 @@ function coordDest (event){
 
         trayectoria(Xi, Yi, Xd, Yd, "Blue", 2)
 
+        //Graficamos
+
         datos = obtenerTrayectoria(Xi, Yi, Xd, Yd, l1, l2, c)
         graficarAngulos(datos)
        
@@ -308,6 +341,8 @@ function coordDest (event){
     }
     
 }
+
+//Funciones para la grafica de los angulos respecto al tiempo
 
 function angulos(x, y , l1, l2, c){
     l2_c = l2+c
@@ -353,6 +388,7 @@ function graficarAngulos(datos) {
     const W = canvas_G.width - 2 * margen;
     const H = canvas_G.height - 2 * margen;
 
+    // Convertir todos los ángulos a grados
     const datos_grados = datos.map(d => ({
         t: d.t,
         theta_1: d.theta_1 * 180 / Math.PI,
@@ -368,6 +404,7 @@ function graficarAngulos(datos) {
     const global_max = Math.max(theta_1_max, theta_2_max);
     const global_min = Math.min(theta_1_min, theta_2_min);
 
+    // Funciones de mapeo
     function mapT(t) {
         return margen + ((t - tiempo_min) / (tiempo_max - tiempo_min)) * W;
     }
@@ -375,6 +412,7 @@ function graficarAngulos(datos) {
         return margen + H - ((th - global_min) / (global_max - global_min)) * H;
     }
 
+    // --- Ejes ---
     ctx_G.strokeStyle = "#333";
     ctx_G.lineWidth = 1.2;
     ctx_G.beginPath();
@@ -383,6 +421,7 @@ function graficarAngulos(datos) {
     ctx_G.lineTo(margen + W, margen + H);
     ctx_G.stroke();
 
+    // --- Etiquetas de los ejes ---
     ctx_G.fillStyle = "black";
     ctx_G.font = "13px Arial";
     ctx_G.textAlign = "center";
@@ -395,6 +434,7 @@ function graficarAngulos(datos) {
     ctx_G.fillText("Ángulo (°)", 0, 0);
     ctx_G.restore();
 
+    // --- Ticks eje X ---
     const numTicksX = 10;
     ctx_G.textAlign = "center";
     ctx_G.font = "11px Arial";
@@ -408,6 +448,7 @@ function graficarAngulos(datos) {
         ctx_G.fillText(t.toFixed(1), x, margen + H + 20);
     }
 
+    // --- Ticks eje Y ---
     const numTicksY = 8;
     ctx_G.textAlign = "right";
     ctx_G.font = "11px Arial";
@@ -421,6 +462,7 @@ function graficarAngulos(datos) {
         ctx_G.fillText(th.toFixed(1), margen - 10, y + 3);
     }
 
+    // --- Curva θ₁ ---
     ctx_G.strokeStyle = "blue";
     ctx_G.lineWidth = 1.8;
     ctx_G.beginPath();
@@ -432,6 +474,7 @@ function graficarAngulos(datos) {
     }
     ctx_G.stroke();
 
+    // --- Curva θ₂ ---
     ctx_G.strokeStyle = "red";
     ctx_G.lineWidth = 1.8;
     ctx_G.beginPath();
@@ -443,6 +486,7 @@ function graficarAngulos(datos) {
     }
     ctx_G.stroke();
 
+    // --- Leyenda en recuadro ---
     const legendX = margen + W - 130;
     const legendY = margen + 10;
     const legendW = 110;
@@ -456,6 +500,7 @@ function graficarAngulos(datos) {
     ctx_G.fill();
     ctx_G.stroke();
 
+    // Texto dentro de la leyenda
     ctx_G.font = "13px Arial";
     ctx_G.textAlign = "left";
     ctx_G.fillStyle = "blue";
@@ -463,6 +508,7 @@ function graficarAngulos(datos) {
     ctx_G.fillStyle = "red";
     ctx_G.fillText("θ2(t)", legendX + 25, legendY + 32);
 
+    // Líneas de color en la leyenda
     ctx_G.strokeStyle = "blue";
     ctx_G.beginPath();
     ctx_G.moveTo(legendX + 8, legendY + 10);
